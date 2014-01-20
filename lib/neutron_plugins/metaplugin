@@ -1,0 +1,76 @@
+# Neutron Metaplugin
+# ---------------------------
+
+# Save trace setting
+MY_XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+source $TOP_DIR/lib/neutron_plugins/metaplugin_plugins_agent
+source $TOP_DIR/lib/neutron_plugins/metaplugin_ml2
+source $TOP_DIR/lib/neutron_plugins/metaplugin_openvswitch
+
+function neutron_plugin_configure_common() {
+    Q_PLUGIN_CONF_PATH=etc/neutron/plugins/metaplugin
+    Q_PLUGIN_CONF_FILENAME=metaplugin.ini
+    Q_DB_NAME="neutron_metaplugin"
+	Q_PLUGIN_CLASS="neutron.plugins.metaplugin.meta_neutron_plugin.MetaPluginV2"
+	ml2_plugin_configure_common
+}
+
+function neutron_plugin_configure_service() {
+	if [[ ${#PLUGINS_FOR_METAPLUGIN_CONF_FILES[@]} > 0 && $PLUGINS_FOR_METAPLUGIN_CONF_PATH == '' ]]; then
+	    die $LINENO "Neutron additional plugin configs not set for metaplugin. exiting"
+	fi
+
+	iniset /$Q_PLUGIN_CONF_FILE meta plugin_list \'openvswitch:neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2,ml2:neutron.plugins.ml2.plugin.Ml2Plugin\'
+	iniset /$Q_PLUGIN_CONF_FILE meta supported_extension_aliases \'provider,binding,external-net,quotas,security-group,agent,dhcp_agent_scheduler,multi-provider,allowed-address-pairs,extra_dhcp_opt\'
+	iniset  /$Q_PLUGIN_CONF_FILE meta l3_plugin_list
+	iniset  /$Q_PLUGIN_CONF_FILE meta default_l3_flavor
+	
+	if [[ $PLUGINS_FOR_METAPLUGIN_CONF_PATH != '' ]]; then
+	    if [ ! -e /$PLUGINS_FOR_METAPLUGIN_CONF_PATH ]; then
+            mkdir -p /$PLUGINS_FOR_METAPLUGIN_CONF_PATH
+		fi
+        local f
+		local PLUGINS_FOR_METAPLUGIN_CONF_FILE
+        for (( f=0; $f < ${#PLUGINS_FOR_METAPLUGIN_CONF_FILES[@]}; f+=1 )); do
+            PLUGINS_FOR_METAPLUGIN_CONF_FILE=$PLUGINS_FOR_METAPLUGIN_CONF_PATH/${PLUGINS_FOR_METAPLUGIN_CONF_FILES[$f]}
+
+			# ml2LinuxBridge setting
+			echo ${PLUGINS_FOR_METAPLUGIN_CONF_FILE} | grep 'ml2'
+			if [ "$?" -eq 0 ]; then
+			    if [ ! -e /$PLUGINS_FOR_METAPLUGIN_CONF_PATH/ml2 ]; then
+                    mkdir -p /$PLUGINS_FOR_METAPLUGIN_CONF_PATH/ml2 
+				fi
+				cp $NEUTRON_DIR/${PLUGINS_FOR_METAPLUGIN_CONF_FILE} /${PLUGINS_FOR_METAPLUGIN_CONF_FILE}
+
+				ml2_plugin_configure_service ${PLUGINS_FOR_METAPLUGIN_CONF_FILE}
+
+			fi
+			
+ 			# Openvswitch setting
+			echo ${PLUGINS_FOR_METAPLUGIN_CONF_FILE} | grep 'openvswitch'
+			if [ "$?" -eq 0 ]; then
+
+			    if [ ! -e /$PLUGINS_FOR_METAPLUGIN_CONF_PATH/openvswitch ]; then
+                    mkdir -p /$PLUGINS_FOR_METAPLUGIN_CONF_PATH/openvswitch 
+				fi
+				
+				cp $NEUTRON_DIR/${PLUGINS_FOR_METAPLUGIN_CONF_FILE} /${PLUGINS_FOR_METAPLUGIN_CONF_FILE}
+
+    		    ovs_neutron_plugin_configure_service ${PLUGINS_FOR_METAPLUGIN_CONF_FILE}
+				
+			fi
+        done
+    fi
+	
+
+}
+
+function has_neutron_plugin_security_group() {
+    # 0 means True here
+    return 0
+}
+
+# Restore xtrace
+$MY_XTRACE

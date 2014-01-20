@@ -1,0 +1,58 @@
+HOST_IP=192.168.1.51
+DEST=/opt/stack
+
+disable_service n-net
+enable_service q-svc
+enable_service q-agt
+enable_service q-dhcp
+enable_service q-l3
+enable_service q-meta
+enable_service neutron
+#enable_service q-fwaas
+#enable_service q-lbaas
+
+LOGFILE=/opt/stack/logs/stack.sh.log
+LOGDAYS=1
+SCREEN_LOGDIR=$DEST/logs/screen
+
+no_proxy=${HOST_IP},localhost,127.0.0.1
+
+#NOVA_BRANCH=stable/havana
+#GLANCE_BRANCH=stable/havana
+#KEYSTONE_BRANCH=stable/havana
+#HORIZON_BRANCH=stable/havana
+#CINDER_BRANCH=stable/havana
+#NEUTRON_BRANCH=stable/havana
+
+ADMIN_PASSWORD=openstack
+MYSQL_PASSWORD=mysql
+RABBIT_PASSWORD=rabbitmq
+SERVICE_PASSWORD=openstack
+SERVICE_TOKEN=openstack
+
+GIT_BASE=https://github.com
+
+FIXED_RANGE=10.0.0.0/24
+NETWORK_GATEWAY=10.0.0.1
+FLOATING_RANGE=172.24.1.0/24
+PUBLIC_NETWORK_GATEWAY=172.24.1.1
+
+PHYSICAL_NETWORK=physnet1
+#OVS_PHYSICAL_BRIDGE=br-ex
+
+Q_PLUGIN=metaplugin
+PLUGINS_FOR_METAPLUGIN_CONF_FILES=("ml2/ml2_conf.ini" "openvswitch/ovs_neutron_plugin.ini")
+PLUGINS_FOR_METAPLUGIN_CONF_PATH=etc/neutron/plugins
+
+enable_service q-ml2
+Q_ML2_TENANT_NETWORK_TYPE=vlan
+Q_ML2_PLUGIN_MECHANISM_DRIVERS=linuxbridge
+Q_ML2_PLUGIN_TYPE_DRIVERS=vlan
+TENANT_VLAN_RANGE=1:1000
+LB_PHYSICAL_INTERFACE=eth2
+
+enable_service q-ovs
+ENABLE_TENANT_TUNNELS=True
+TENANT_TUNNEL_RANGES=1:1000
+OVS_ENABLE_TUNNELING=True
+Q_OVS_USE_VETH=True
