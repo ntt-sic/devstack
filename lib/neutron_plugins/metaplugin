@@ -26,6 +26,7 @@ function neutron_plugin_configure_service() {
 	iniset /$Q_PLUGIN_CONF_FILE meta supported_extension_aliases \'provider,binding,external-net,quotas,security-group,agent,dhcp_agent_scheduler,multi-provider,allowed-address-pairs,extra_dhcp_opt\'
 	iniset  /$Q_PLUGIN_CONF_FILE meta l3_plugin_list
 	iniset  /$Q_PLUGIN_CONF_FILE meta default_l3_flavor
+	iniset  /$Q_PLUGIN_CONF_FILE meta rpc_flavor='ml2'
 	
 	if [[ $PLUGINS_FOR_METAPLUGIN_CONF_PATH != '' ]]; then
 	    if [ ! -e /$PLUGINS_FOR_METAPLUGIN_CONF_PATH ]; then

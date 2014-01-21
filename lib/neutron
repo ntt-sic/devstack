@@ -714,7 +714,7 @@ function _configure_neutron_metadata_agent() {
     iniset $Q_META_CONF_FILE DEFAULT nova_metadata_ip $Q_META_DATA_IP
     iniset $Q_META_CONF_FILE DEFAULT root_helper "$Q_RR_COMMAND"
 
-
+    _neutron_setup_keystone $Q_META_CONF_FILE DEFAULT True True True
 
 }
 
