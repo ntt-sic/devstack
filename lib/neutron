@@ -489,6 +489,8 @@ function start_neutron_agents() {
     fi
     if is_service_enabled q-vpn; then
         screen_it q-vpn "cd $NEUTRON_DIR && $AGENT_VPN_BINARY $L3_CONF_FILES"
+    elif is_service_enabled q-lbaasl3; then
+        screen_it q-lbaasl3 "cd $NEUTRON_DIR && python $AGENT_LBAASL3_BINARY $L3_CONF_FILES"
     else
         screen_it q-l3 "cd $NEUTRON_DIR && python $AGENT_L3_BINARY $L3_CONF_FILES"
     fi
