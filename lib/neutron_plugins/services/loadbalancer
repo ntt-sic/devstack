@@ -7,11 +7,15 @@ set +o xtrace
 
 
 AGENT_LBAAS_BINARY="$NEUTRON_BIN_DIR/neutron-lbaas-agent"
+AGENT_LBAASL3_BINARY="$NEUTRON_BIN_DIR/neutron-lbaas-l3-agent"
 LBAAS_PLUGIN=neutron.services.loadbalancer.plugin.LoadBalancerPlugin
+PROVIDER_HAPROXY=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
+PROVIDER_LVS=LOADBALANCER:lvs:neutron.services.loadbalancer.drivers.lvs.plugin_driver.LVSOnHostPluginDriver
 
 function neutron_agent_lbaas_install_agent_packages() {
     if is_ubuntu || is_fedora; then
         install_package haproxy
+        install_package keepalived
     elif is_suse; then
         ### FIXME: Find out if package can be pushed to Factory
         echo "HAProxy packages can be installed from server:http project in OBS"
@@ -20,6 +24,7 @@ function neutron_agent_lbaas_install_agent_packages() {
 
 function neutron_agent_lbaas_configure_common() {
     _neutron_service_plugin_class_add $LBAAS_PLUGIN
+    iniset_multiline $NEUTRON_CONF service_providers service_provider $PROVIDER_HAPROXY $PROVIDER_LVS
 }
 
 function neutron_agent_lbaas_configure_agent() {
@@ -44,6 +49,7 @@ function neutron_agent_lbaas_configure_agent() {
 function neutron_lbaas_stop() {
     pids=$(ps aux | awk '/haproxy/ { print $2 }')
     [ ! -z "$pids" ] && sudo kill $pids
+    sudo pkill keepalived
 }
 
 # Restore xtrace
